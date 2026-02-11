@@ -1,0 +1,7 @@
+spring:
+  liquibase:
+    enabled: true
+logging:
+  level:
+    org.springframework.data.r2dbc: DEBUG
+    org.springframework.r2dbc.core: DEBUG

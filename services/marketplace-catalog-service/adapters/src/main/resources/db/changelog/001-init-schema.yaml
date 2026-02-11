@@ -1,0 +1,161 @@
+databaseChangeLog:
+  - changeSet:
+      id: 000-enable-pgcrypto-extension
+      author: catalog-service
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+  - changeSet:
+      id: 001-create-listing-table
+      author: catalog-service
+      changes:
+        - createTable:
+            tableName: listing
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: title
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: price
+                  type: numeric(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: currency
+                  type: varchar(3)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: category
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: tags
+                  type: text[]
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: listing
+            indexName: idx_listing_category
+            columns:
+              - column:
+                  name: category
+
+        - createIndex:
+            tableName: listing
+            indexName: idx_listing_status
+            columns:
+              - column:
+                  name: status
+
+
+  - changeSet:
+      id: 002-create-listing-preview-image-table
+      author: catalog-service
+      changes:
+        - createTable:
+            tableName: listing_preview_image
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: listing_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: url
+                  type: text
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: position
+                  type: int
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: listing_preview_image
+            baseColumnNames: listing_id
+            referencedTableName: listing
+            referencedColumnNames: id
+            constraintName: fk_listing_preview_image_listing
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: listing_preview_image
+            indexName: idx_listing_preview_image_listing_id
+            columns:
+              - column:
+                  name: listing_id
+
+
+  - changeSet:
+      id: 003-add-gin-index-for-listing-tags
+      author: catalog-service
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_listing_tags_gin ON listing USING GIN (tags);
+
+  - changeSet:
+      id: 004-enable-pg-trgm-extension
+      author: catalog-service
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+  - changeSet:
+      id: 005-add-trgm-index-for-listing-title
+      author: catalog-service
+      changes:
+        - sql:
+            sql: CREATE INDEX idx_listing_title_trgm ON listing USING GIN (title gin_trgm_ops);

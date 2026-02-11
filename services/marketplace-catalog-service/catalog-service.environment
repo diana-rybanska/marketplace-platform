@@ -1,0 +1,8 @@
+environment:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/catalog
+  SPRING_DATASOURCE_USERNAME: catalog
+  SPRING_DATASOURCE_PASSWORD: catalog
+
+  SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/catalog
+  SPRING_R2DBC_USERNAME: catalog
+  SPRING_R2DBC_PASSWORD: catalog

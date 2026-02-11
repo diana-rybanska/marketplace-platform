@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: Catalog Service API
+  version: 1.0.0
+  description: Marketplace listings catalog (PDF patterns)
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+  /listings:
+    post:
+      summary: Create listing
+      operationId: createListing
+      tags: [Listings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateListingRequest'
+      responses:
+        '201':
+          description: Listing created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingDetailResponse'
+        '400':
+          description: Invalid request
+
+    get:
+      summary: Get listings
+      operationId: getListings
+      tags: [Listings]
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
+          description: Comma-separated tags (match ANY)
+          schema:
+            type: string
+            example: "jersey,midi"
+      responses:
+        '200':
+          description: Listings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListingCardResponse'
+
+  /listings/{id}:
+    get:
+      summary: Get listing detail
+      operationId: getListingById
+      tags: [Listings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Listing detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingDetailResponse'
+        '404':
+          description: Listing not found
+
+    patch:
+      summary: Update listing
+      operationId: patchListing
+      tags: [Listings]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchListingRequest'
+      responses:
+        '200':
+          description: Listing updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingDetailResponse'
+        '404':
+          description: Listing not found
+
+  /listings/search:
+    get:
+      summary: Search listings
+      operationId: searchListings
+      tags: [Listings]
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "skirt"
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListingCardResponse'
+
+components:
+  schemas:
+
+    ListingStatus:
+      type: string
+      enum: [DRAFT, ACTIVE, ARCHIVED]
+
+    CurrencyCode:
+      type: string
+      description: ISO 4217 currency code
+      example: EUR
+      minLength: 3
+      maxLength: 3
+
+    CreateListingRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        price:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          $ref: '#/components/schemas/CurrencyCode'
+        category:
+          type: string
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 50
+        previewImages:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            format: uri
+      required:
+        - title
+        - description
+        - price
+        - currency
+        - category
+
+    PatchListingRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 500
+        description:
+          type: string
+        price:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          $ref: '#/components/schemas/CurrencyCode'
+        category:
+          type: string
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 50
+        previewImages:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            format: uri
+        status:
+          $ref: '#/components/schemas/ListingStatus'
+
+    ListingCardResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        price:
+          type: number
+          format: double
+        currency:
+          $ref: '#/components/schemas/CurrencyCode'
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        previewImages:
+          type: array
+          items:
+            type: string
+            format: uri
+        status:
+          $ref: '#/components/schemas/ListingStatus'
+      required:
+        - id
+        - title
+        - price
+        - currency
+        - category
+        - tags
+        - previewImages
+        - status
+
+    ListingDetails:
+      type: object
+      description: Optional flexible listing details stored in MongoDB (future)
+      additionalProperties: true
+
+    ListingDetailResponse:
+      type: object
+      properties:
+        listing:
+          allOf:
+            - $ref: '#/components/schemas/ListingCardResponse'
+            - type: object
+
+              properties:
+                description:
+                  type: string
+                createdAt:
+                  type: string
+                  format: date-time
+                updatedAt:
+                  type: string
+                  format: date-time
+              required:
+                - description
+                - createdAt
+                - updatedAt
+        details:
+          $ref: '#/components/schemas/ListingDetails'
+      required:
+        - listing
